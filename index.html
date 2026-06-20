@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Learning Land!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+
+<!-- ===================== STYLES ===================== -->
+<style>
+  :root {
+    --color-sky:     #4FC3F7;
+    --color-sun:     #FFD600;
+    --color-grass:   #66BB6A;
+    --color-tomato:  #EF5350;
+    --color-purple:  #AB47BC;
+    --color-cream:   #FFFDE7;
+    --color-ink:     #212121;
+    --color-chalk:   #F5F5F5;
+    --color-outline: #37474F;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--color-sky);
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px;
+    color: var(--color-ink);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ── Screen Management ── */
+  #app {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  .screen.active  { display: flex; }
+  .screen.visible { opacity: 1; }
+
+  /* ══════════════════ STOREFRONT ══════════════════ */
+
+  #screen-storefront { background: var(--color-sky); }
+
+  .storefront-header {
+    background: var(--color-tomato);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid var(--color-outline);
+    flex-shrink: 0;
+    min-height: 82px;
+  }
+
+  .storefront-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 38px;
+    color: white;
+    text-shadow: 2px 3px 0 rgba(0,0,0,.2);
+  }
+
+  .help-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--color-outline);
+    font-family: 'Fredoka One', cursive;
+    font-size: 26px;
+    color: var(--color-ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 100ms;
+    flex-shrink: 0;
+  }
+  .help-btn:active { transform: scale(0.88); }
+
+  .storefront-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    gap: 32px;
+    overflow: auto;
+  }
+
+  .storefront-tagline {
+    font-family: 'Fredoka One', cursive;
+    font-size: 30px;
+    color: var(--color-cream);
+    text-shadow: 1px 2px 0 rgba(0,0,0,.15);
+  }
+
+  .game-cards-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 920px;
+  }
+
+  .game-card {
+    width: 210px;
+    min-height: 230px;
+    border-radius: 24px;
+    border: 4px solid var(--color-outline);
+    background: var(--color-cream);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 28px 16px 20px;
+    position: relative;
+    box-shadow: 0 6px 0 var(--color-outline);
+    transition: transform 100ms, box-shadow 100ms, top 100ms;
+    top: 0;
+  }
+
+  .game-card.open { cursor: pointer; }
+  .game-card.open:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 0 var(--color-outline);
+    top: 4px;
+  }
+
+  .game-card.coming-soon {
+    filter: grayscale(0.65) opacity(0.6);
+    cursor: default;
+  }
+
+  .card-stripe {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 10px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .card-emoji {
+    font-size: 62px;
+    line-height: 1;
+    margin-top: 4px;
+  }
+
+  .card-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 30px;
+    color: var(--color-ink);
+  }
+
+  .card-badge {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    padding: 6px 18px;
+    border-radius: 48px;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-open   { background: var(--color-grass); }
+  .badge-coming { background: #9E9E9E; }
+
+  /* ══════════════════ SHARED GAME CHROME ══════════════════ */
+
+  .game-header {
+    background: var(--color-purple);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 4px solid var(--color-outline);
+    flex-shrink: 0;
+    position: relative;
+    min-height: 76px;
+  }
+
+  /* Spelling game gets orange header */
+  #screen-game-spelling .game-header { background: #FF9800; }
+
+  .back-btn {
+    position: absolute;
+    left: 16px;
+    height: 56px;
+    padding: 0 22px;
+    border-radius: 48px;
+    background: white;
+    border: 3px solid var(--color-outline);
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: var(--color-ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 100ms;
+    white-space: nowrap;
+  }
+  .back-btn:active { transform: scale(0.90); }
+
+  .game-header-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 28px;
+    color: white;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.2);
+    text-align: center;
+    padding: 0 80px; /* room for back button */
+  }
+
+  .game-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 16px 18px;
+    gap: 14px;
+    overflow: hidden;
+  }
+
+  /* Canvas */
+  .canvas-wrapper {
+    position: relative;
+    border-radius: 16px;
+    border: 4px solid var(--color-outline);
+    overflow: hidden;
+    box-shadow: 0 6px 0 var(--color-outline);
+    flex-shrink: 0;
+    background: var(--color-cream);
+  }
+
+  #tracing-canvas, #spelling-canvas {
+    display: block;
+    touch-action: none;
+  }
+
+  .canvas-feedback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 40px;
+    color: white;
+    text-align: center;
+    line-height: 1.35;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 280ms;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.3);
+  }
+  .canvas-feedback.show { opacity: 1; }
+
+  /* ══════════════════ TRACING GAME ══════════════════ */
+
+  #screen-game-tracing { background: var(--color-sky); }
+
+  /* Letter nav strip */
+  .letter-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .nav-arrow {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--color-outline);
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 0 var(--color-outline);
+    transition: transform 100ms;
+    flex-shrink: 0;
+  }
+  .nav-arrow:active { transform: scale(0.88); }
+
+  .strip-scroll {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .strip-scroll::-webkit-scrollbar { display: none; }
+
+  .letter-strip {
+    display: flex;
+    gap: 6px;
+    padding: 6px 2px;
+    width: max-content;
+  }
+
+  .letter-pill {
+    width: 54px;
+    height: 54px;
+    border-radius: 48px;
+    background: white;
+    border: 3px solid var(--color-outline);
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 150ms, transform 100ms;
+    flex-shrink: 0;
+  }
+  .letter-pill:active { transform: scale(0.86); }
+  .letter-pill.active { background: var(--color-sun); }
+
+  /* Action buttons */
+  .action-buttons {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .action-btn {
+    height: 64px;
+    padding: 0 28px;
+    border-radius: 48px;
+    border: 3px solid var(--color-outline);
+    font-family: 'Fredoka One', cursive;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 0 var(--color-outline);
+    transition: transform 100ms, box-shadow 100ms, top 100ms, opacity 200ms;
+    position: relative;
+    top: 0;
+  }
+  .action-btn:active {
+    transform: scale(0.94);
+    box-shadow: 0 1px 0 var(--color-outline);
+    top: 3px;
+  }
+
+  .btn-clear {
+    background: var(--color-cream);
+    color: var(--color-ink);
+  }
+
+  .btn-done {
+    background: var(--color-grass);
+    color: white;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .btn-done.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ══════════════════ SPELLING GAME ══════════════════ */
+
+  #screen-game-spelling { background: var(--color-sky); }
+
+  .spelling-subview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+  }
+
+  /* Emoji Grid */
+  .emoji-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    max-width: 700px;
+    padding: 8px;
+    overflow-y: auto;
+    max-height: calc(100vh - 180px);
+  }
+
+  .emoji-btn {
+    width: 100px;
+    height: 100px;
+    border-radius: 20px;
+    background: white;
+    border: 3px solid var(--color-outline);
+    font-size: 56px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 0 var(--color-outline);
+    transition: transform 100ms, box-shadow 100ms, top 100ms;
+    position: relative;
+    top: 0;
+    flex-shrink: 0;
+  }
+  .emoji-btn:active {
+    transform: scale(0.90);
+    box-shadow: 0 1px 0 var(--color-outline);
+    top: 3px;
+  }
+
+  /* Word Progress Bar */
+  .word-progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    border: 3px solid var(--color-outline);
+    border-radius: 48px;
+    padding: 10px 24px;
+    box-shadow: 0 4px 0 var(--color-outline);
+    flex-shrink: 0;
+    max-width: 90vw;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .word-progress-bar::-webkit-scrollbar { display: none; }
+
+  .wpb-emoji {
+    font-size: 40px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .wpb-letters {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  .wpb-letter {
+    font-family: 'Fredoka One', cursive;
+    font-size: 36px;
+    line-height: 1;
+    color: #BDBDBD;
+    padding-bottom: 4px;
+    border-bottom: 4px solid transparent;
+    transition: color 200ms, border-color 200ms;
+    flex-shrink: 0;
+  }
+
+  .wpb-letter.current {
+    color: var(--color-ink);
+    border-bottom-color: var(--color-sun);
+  }
+
+  .wpb-letter.done {
+    color: var(--color-grass);
+    border-bottom-color: var(--color-grass);
+  }
+
+  .wpb-letter.space-char {
+    width: 14px;
+    border-bottom-color: transparent;
+  }
+
+  /* ══════════════════ CONFETTI & SPARKLES ══════════════════ */
+
+  #confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 999;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    top: -24px;
+  }
+
+  .sparkle-piece {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* ══════════════════ ANIMATIONS ══════════════════ */
+
+  @keyframes confetti-fall {
+    0%   { transform: translateY(0) rotate(0deg) scale(1);       opacity: 1; }
+    85%  { opacity: 1; }
+    100% { transform: translateY(108vh) rotate(600deg) scale(.4); opacity: 0; }
+  }
+
+  @keyframes sparkle-rise {
+    0%   { transform: translateY(0) scale(1) rotate(0deg);          opacity: 1; }
+    100% { transform: translateY(-80vh) scale(1.4) rotate(30deg);   opacity: 0; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15%       { transform: translateX(-10px); }
+    30%       { transform: translateX(10px); }
+    45%       { transform: translateX(-7px); }
+    60%       { transform: translateX(7px); }
+    75%       { transform: translateX(-4px); }
+    90%       { transform: translateX(4px); }
+  }
+
+  .shake { animation: shake 500ms cubic-bezier(.36,.07,.19,.97) both; }
+</style>
+</head>
+<body>
+
+<!-- ===================== MARKUP ===================== -->
+<div id="app">
+
+  <!-- STOREFRONT SCREEN -->
+  <div id="screen-storefront" class="screen">
+    <header class="storefront-header">
+      <div class="storefront-title">🌟 Learning Land!</div>
+      <button class="help-btn" aria-label="Help">?</button>
+    </header>
+    <main class="storefront-body">
+      <p class="storefront-tagline">Tap a game to play!</p>
+      <div class="game-cards-row" id="game-cards-row"></div>
+    </main>
+  </div>
+
+  <!-- TRACING GAME SCREEN -->
+  <div id="screen-game-tracing" class="screen">
+    <header class="game-header">
+      <button class="back-btn" id="back-btn">← Back</button>
+      <h1 class="game-header-title">Trace the Letter!</h1>
+    </header>
+    <main class="game-body">
+      <div class="canvas-wrapper" id="canvas-wrapper">
+        <canvas id="tracing-canvas"></canvas>
+        <div class="canvas-feedback" id="canvas-feedback"></div>
+      </div>
+      <div class="letter-nav">
+        <button class="nav-arrow" id="prev-letter" aria-label="Previous letter">⬅</button>
+        <div class="strip-scroll">
+          <div class="letter-strip" id="letter-strip"></div>
+        </div>
+        <button class="nav-arrow" id="next-letter" aria-label="Next letter">➡</button>
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn btn-clear" id="clear-btn">🗑 Clear</button>
+        <button class="action-btn btn-done"  id="done-btn"  aria-hidden="true">✓ Done?</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- SPELLING GAME SCREEN -->
+  <div id="screen-game-spelling" class="screen">
+    <header class="game-header" id="spelling-header">
+      <button class="back-btn" id="spelling-back-btn">← Back</button>
+      <h1 class="game-header-title" id="spelling-header-title">Spelling!</h1>
+    </header>
+    <main class="game-body" id="spelling-body">
+
+      <!-- Sub-view A: Topic Picker -->
+      <div id="spelling-topic-picker" class="spelling-subview">
+        <p class="storefront-tagline" style="color:var(--color-ink)">Pick a topic to spell!</p>
+        <div class="game-cards-row" id="spelling-topic-cards"></div>
+      </div>
+
+      <!-- Sub-view B: Emoji Picker -->
+      <div id="spelling-emoji-picker" class="spelling-subview" style="display:none">
+        <p class="storefront-tagline" style="color:var(--color-ink)">Pick something to spell!</p>
+        <div class="emoji-grid" id="spelling-emoji-grid"></div>
+      </div>
+
+      <!-- Sub-view C: Tracing View -->
+      <div id="spelling-trace-view" class="spelling-subview" style="display:none;flex-direction:column;align-items:center;gap:14px;width:100%">
+        <div class="word-progress-bar" id="word-progress-bar"></div>
+        <div class="canvas-wrapper" id="spelling-canvas-wrapper">
+          <canvas id="spelling-canvas"></canvas>
+          <div class="canvas-feedback" id="spelling-canvas-feedback"></div>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn btn-clear" id="spelling-clear-btn">🗑 Clear</button>
+          <button class="action-btn btn-done"  id="spelling-done-btn" aria-hidden="true">✓ Done?</button>
+        </div>
+      </div>
+
+      <!-- Word Complete Overlay -->
+      <div id="word-complete-overlay" style="display:none;position:absolute;inset:0;background:rgba(255,107,157,0.90);flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:10">
+        <div id="wco-emoji" style="font-size:120px;line-height:1"></div>
+        <div id="wco-word"  style="font-family:'Fredoka One',cursive;font-size:56px;color:white;text-shadow:3px 3px 0 rgba(0,0,0,.2);letter-spacing:6px"></div>
+        <div id="wco-msg"   style="font-family:'Nunito',sans-serif;font-size:26px;font-weight:800;color:white;text-shadow:2px 2px 0 rgba(0,0,0,.15)"></div>
+        <div style="display:flex;gap:20px;margin-top:16px;flex-wrap:wrap;justify-content:center">
+          <button class="action-btn" id="wco-try-another" style="background:white;color:var(--color-ink);border-color:var(--color-outline)">Try Another 🐾</button>
+          <button class="action-btn" id="wco-new-topic"   style="background:var(--color-sun);color:var(--color-ink);border-color:var(--color-outline)">New Topic 🌟</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Confetti + sparkle layer -->
+  <div id="confetti-container"></div>
+</div>
+
+<!-- ===================== SCRIPTS ===================== -->
+<script>
+'use strict';
+
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+
+const GAMES = [
+  { id:'tracing',  title:'Letters',  emoji:'✏️', color:'#AB47BC', status:'open',        screenId:'screen-game-tracing'  },
+  { id:'spelling', title:'Spelling', emoji:'🐾', color:'#FF9800', status:'open',        screenId:'screen-game-spelling' },
+  { id:'math',     title:'Numbers',  emoji:'🔢', color:'#66BB6A', status:'coming-soon' },
+  { id:'reading',  title:'Reading',  emoji:'📖', color:'#EF5350', status:'coming-soon' },
+];
+
+const LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+
+const SPELLING_TOPICS = [
+  {
+    id:'animals', label:'Animals', icon:'🐾',
+    words:[
+      {emoji:'🐶',word:'DOG'},   {emoji:'🐱',word:'CAT'},    {emoji:'🐸',word:'FROG'},
+      {emoji:'🐻',word:'BEAR'},  {emoji:'🦁',word:'LION'},   {emoji:'🐘',word:'ELEPHANT'},
+      {emoji:'🦊',word:'FOX'},   {emoji:'🐢',word:'TURTLE'}, {emoji:'🦋',word:'BUTTERFLY'},
+      {emoji:'🐧',word:'PENGUIN'},
+    ],
+  },
+  {
+    id:'magic', label:'Magic', icon:'✨',
+    words:[
+      {emoji:'🧙',word:'WIZARD'},  {emoji:'🦄',word:'UNICORN'}, {emoji:'🧚',word:'FAIRY'},
+      {emoji:'🔮',word:'CRYSTAL'}, {emoji:'🌈',word:'RAINBOW'}, {emoji:'⭐',word:'STAR'},
+      {emoji:'🪄',word:'WAND'},    {emoji:'🏰',word:'CASTLE'},  {emoji:'🐉',word:'DRAGON'},
+      {emoji:'🧝',word:'ELF'},
+    ],
+  },
+  {
+    id:'vehicles', label:'Vehicles', icon:'🚗',
+    words:[
+      {emoji:'🚗',word:'CAR'},       {emoji:'🚌',word:'BUS'},        {emoji:'✈️',word:'PLANE'},
+      {emoji:'🚂',word:'TRAIN'},     {emoji:'🚀',word:'ROCKET'},     {emoji:'🚁',word:'HELICOPTER'},
+      {emoji:'⛵',word:'BOAT'},      {emoji:'🚒',word:'FIRETRUCK'},  {emoji:'🚜',word:'TRACTOR'},
+      {emoji:'🛸',word:'UFO'},
+    ],
+  },
+  {
+    id:'food', label:'Food', icon:'🍕',
+    words:[
+      {emoji:'🍕',word:'PIZZA'},      {emoji:'🍦',word:'ICE CREAM'}, {emoji:'🍎',word:'APPLE'},
+      {emoji:'🍌',word:'BANANA'},     {emoji:'🍪',word:'COOKIE'},    {emoji:'🌮',word:'TACO'},
+      {emoji:'🍩',word:'DONUT'},      {emoji:'🥕',word:'CARROT'},    {emoji:'🍓',word:'STRAWBERRY'},
+      {emoji:'🧁',word:'CUPCAKE'},
+    ],
+  },
+  {
+    id:'space', label:'Space', icon:'🚀',
+    words:[
+      {emoji:'🌙',word:'MOON'},     {emoji:'⭐',word:'STAR'},    {emoji:'🪐',word:'PLANET'},
+      {emoji:'☀️',word:'SUN'},      {emoji:'🚀',word:'ROCKET'},  {emoji:'👽',word:'ALIEN'},
+      {emoji:'🌌',word:'GALAXY'},   {emoji:'☄️',word:'COMET'},   {emoji:'🌍',word:'EARTH'},
+      {emoji:'🔭',word:'TELESCOPE'},
+    ],
+  },
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+const AppState = {
+  currentScreen: 'storefront',
+  tracing: {
+    currentLetter:    'A',
+    currentStrokes:   [],
+    attemptCount:     0,
+    celebrationShown: false,
+  },
+};
+
+// ─── APP ROUTER ──────────────────────────────────────────────────────────────
+
+const AppRouter = (() => {
+  function navigate(screenId) {
+    const current = document.querySelector('.screen.active');
+    const next    = document.getElementById(screenId);
+    if (!next || current === next) return;
+
+    function revealNext() {
+      next.classList.add('active');
+      requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
+    }
+
+    if (current) {
+      current.classList.remove('visible');
+      setTimeout(() => { current.classList.remove('active'); revealNext(); }, 210);
+    } else {
+      revealNext();
+    }
+    AppState.currentScreen = screenId;
+  }
+
+  return { navigate };
+})();
+
+// ─── STOREFRONT MODULE ───────────────────────────────────────────────────────
+
+const StorefrontModule = (() => {
+  function init() {
+    const row = document.getElementById('game-cards-row');
+    GAMES.forEach(game => {
+      const open = game.status === 'open';
+      const card = document.createElement('div');
+      card.className = `game-card ${open ? 'open' : 'coming-soon'}`;
+      card.innerHTML = `
+        <div class="card-stripe" style="background:${game.color}"></div>
+        <div class="card-emoji">${game.emoji}</div>
+        <div class="card-title">${game.title}</div>
+        <div class="card-badge ${open ? 'badge-open' : 'badge-coming'}">${open ? 'OPEN' : 'Coming Soon!'}</div>`;
+      if (open) {
+        card.addEventListener('click', () => {
+          AppRouter.navigate(game.screenId);
+          if (game.id === 'tracing')  TracingGameModule.start();
+          if (game.id === 'spelling') SpellingGameModule.start();
+        });
+      }
+      row.appendChild(card);
+    });
+  }
+
+  return { init };
+})();
+
+// ─── SHARED FX (module-level so both games can call them) ─────────────────────
+
+function launchConfetti(count = 56) {
+  const container = document.getElementById('confetti-container');
+  const colors    = ['#FFD600','#EF5350','#AB47BC','#4FC3F7','#66BB6A','#FF9800','#FF6B9D'];
+  const glyphs    = ['■','●','▲','◆','★','❤'];
+
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className   = 'confetti-piece';
+      p.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+      p.style.left  = Math.random() * 100 + 'vw';
+      p.style.color = colors[Math.floor(Math.random() * colors.length)];
+      p.style.fontSize  = (9 + Math.random() * 14) + 'px';
+      p.style.animation = `confetti-fall ${1.1 + Math.random() * 0.9}s ease-out forwards`;
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 2600);
+    }, i * 28);
+  }
+}
+
+function launchSparkles() {
+  const container = document.getElementById('confetti-container');
+  const sparkles  = ['✨','⭐','💫','🌟','💖'];
+
+  for (let i = 0; i < 18; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className   = 'sparkle-piece';
+      p.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
+      p.style.left  = (20 + Math.random() * 60) + 'vw';
+      p.style.bottom = '0px';
+      p.style.fontSize  = (20 + Math.random() * 20) + 'px';
+      p.style.animation = `sparkle-rise ${1.2 + Math.random() * 0.8}s ease-out forwards`;
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 2200);
+    }, i * 60);
+  }
+}
+
+// 5-tier grade definitions (shared data)
+const GRADE_TIERS = {
+  1: { label:'Try Again',   msg:'Try again! Keep going! 💪',     bg:'rgba(239,83,80,0.75)',   shake:true,  confetti:0,  sparkle:false },
+  2: { label:'Not Bad',     msg:'Not bad! Try once more! 🙂',    bg:'rgba(255,152,0,0.75)',   shake:true,  confetti:0,  sparkle:false },
+  3: { label:'Pretty Good', msg:'Pretty good! Almost there! 😊', bg:'rgba(255,214,0,0.80)',   shake:false, confetti:0,  sparkle:false },
+  4: { label:'Good Job',    msg:'Good job! ⭐',                   bg:'rgba(102,187,106,0.75)', shake:false, confetti:35, sparkle:false },
+  5: { label:'Amazing!',    msg:'✨ AMAZING! ✨',                 bg:'rgba(255,107,157,0.82)', shake:false, confetti:56, sparkle:true  },
+};
+
+const TIER_ICONS = { 1:'💪', 2:'🙂', 3:'😊', 4:'⭐', 5:'✨' };
+
+function coverageToTier(coverage) {
+  if (coverage >= 0.85) return 5;
+  if (coverage >= 0.65) return 4;
+  if (coverage >= 0.50) return 3;
+  if (coverage >= 0.30) return 2;
+  return 1;
+}
+
+function buildGradeHTML(tier) {
+  const t = GRADE_TIERS[tier];
+  return `
+    <span style="font-size:52px;display:block;margin-bottom:6px">${TIER_ICONS[tier]}</span>
+    <span style="font-family:'Fredoka One',cursive;font-size:40px">${t.label}</span>
+    <span style="font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;display:block;margin-top:8px">${t.msg}</span>`;
+}
+
+// ─── TRACING GAME MODULE ─────────────────────────────────────────────────────
+
+const TracingGameModule = (() => {
+  let canvas, ctx;
+  let isDrawing     = false;
+  let currentStroke = [];
+  let drawnStrokes  = [];
+  let doneTimer     = null;
+  let canvasSize    = 500;
+
+  // ── Initialization ──────────────────────────────────────────────────────
+
+  function init() {
+    canvas = document.getElementById('tracing-canvas');
+    ctx    = canvas.getContext('2d', { willReadFrequently: true });
+
+    buildLetterStrip();
+    attachEvents();
+    measureAndSize();
+    document.fonts.ready.then(drawGhostLetter);
+  }
+
+  function attachEvents() {
+    document.getElementById('back-btn').addEventListener('click', goBack);
+    document.getElementById('clear-btn').addEventListener('click', clearCanvas);
+    document.getElementById('done-btn').addEventListener('click', checkAccuracy);
+    document.getElementById('prev-letter').addEventListener('click', prevLetter);
+    document.getElementById('next-letter').addEventListener('click', nextLetter);
+
+    canvas.addEventListener('pointerdown',   onPointerDown);
+    canvas.addEventListener('pointermove',   onPointerMove);
+    canvas.addEventListener('pointerup',     onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+    window.addEventListener('resize', () => {
+      if (AppState.currentScreen !== 'screen-game-tracing') return;
+      measureAndSize();
+      drawGhostLetter();
+      drawnStrokes = [];
+      hideDoneBtn();
+      hideFeedback();
+    });
+  }
+
+  function measureAndSize() {
+    const availH = window.innerHeight - 320;
+    const availW = window.innerWidth  - 40;
+    canvasSize = Math.max(280, Math.min(560, availH, availW));
+    canvas.width  = canvasSize;
+    canvas.height = canvasSize;
+  }
+
+  // ── Letter Strip ────────────────────────────────────────────────────────
+
+  function buildLetterStrip() {
+    const strip = document.getElementById('letter-strip');
+    strip.innerHTML = '';
+    LETTERS.forEach(letter => {
+      const pill = document.createElement('button');
+      pill.className      = 'letter-pill';
+      pill.textContent    = letter;
+      pill.dataset.letter = letter;
+      pill.addEventListener('click', () => setLetter(letter));
+      strip.appendChild(pill);
+    });
+  }
+
+  function updateStrip() {
+    document.querySelectorAll('.letter-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.letter === AppState.tracing.currentLetter);
+    });
+  }
+
+  function scrollToActive() {
+    const active = document.querySelector('.letter-pill.active');
+    if (active) active.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  }
+
+  // ── Navigation ──────────────────────────────────────────────────────────
+
+  function start() {
+    AppState.tracing = { currentLetter:'A', currentStrokes:[], attemptCount:0, celebrationShown:false };
+    drawnStrokes  = [];
+    currentStroke = [];
+    hideDoneBtn();
+    hideFeedback();
+    measureAndSize();
+    updateStrip();
+    drawGhostLetter();
+    setTimeout(scrollToActive, 80);
+  }
+
+  function goBack() {
+    clearState();
+    AppRouter.navigate('screen-storefront');
+  }
+
+  function clearState() {
+    drawnStrokes  = [];
+    currentStroke = [];
+    isDrawing     = false;
+    clearTimeout(doneTimer);
+    hideDoneBtn();
+    hideFeedback();
+  }
+
+  function setLetter(letter) {
+    AppState.tracing.currentLetter = letter;
+    drawnStrokes = [];
+    hideDoneBtn();
+    hideFeedback();
+    updateStrip();
+    scrollToActive();
+    drawGhostLetter();
+  }
+
+  function prevLetter() {
+    const i = LETTERS.indexOf(AppState.tracing.currentLetter);
+    if (i > 0) setLetter(LETTERS[i - 1]);
+  }
+
+  function nextLetter() {
+    const i = LETTERS.indexOf(AppState.tracing.currentLetter);
+    if (i < LETTERS.length - 1) setLetter(LETTERS[i + 1]);
+  }
+
+  // ── Canvas Drawing ───────────────────────────────────────────────────────
+
+  function drawGhostLetter() {
+    const s      = canvasSize;
+    const letter = AppState.tracing.currentLetter;
+    const fs     = Math.floor(s * 0.72);
+
+    ctx.clearRect(0, 0, s, s);
+    ctx.fillStyle = '#FFFDE7';
+    ctx.fillRect(0, 0, s, s);
+
+    // Ghost letter — outline style so child traces "inside" the shape
+    ctx.save();
+    ctx.globalAlpha  = 0.55;
+    ctx.strokeStyle  = '#B0BEC5';
+    ctx.lineWidth    = Math.max(10, s * 0.022);
+    ctx.lineJoin     = 'round';
+    ctx.lineCap      = 'round';
+    ctx.font         = `bold ${fs}px 'Fredoka One', 'Arial Rounded MT Bold', Arial, sans-serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeText(letter, s / 2, s / 2 + fs * 0.04);
+    ctx.globalAlpha  = 1;
+    ctx.restore();
+
+    drawGuideDots(letter, s);
+  }
+
+  function drawGuideDots(letter, s) {
+    const pts = getGuideDots(letter, s);
+    pts.forEach((pt, i) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 14, 0, Math.PI * 2);
+      ctx.fillStyle   = '#AB47BC';
+      ctx.fill();
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth   = 3;
+      ctx.stroke();
+      ctx.fillStyle    = 'white';
+      ctx.font         = `bold 14px 'Nunito', sans-serif`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), pt.x, pt.y);
+      ctx.restore();
+    });
+  }
+
+  function getGuideDots(letter, s) {
+    const map = {
+      A:[{x:.50,y:.14},{x:.20,y:.86},{x:.80,y:.86}],
+      B:[{x:.28,y:.14},{x:.28,y:.86}],
+      C:[{x:.76,y:.22},{x:.76,y:.78}],
+      D:[{x:.28,y:.14},{x:.28,y:.86}],
+      E:[{x:.72,y:.14},{x:.28,y:.14},{x:.28,y:.86}],
+      F:[{x:.72,y:.14},{x:.28,y:.14}],
+      G:[{x:.76,y:.22},{x:.76,y:.52}],
+      H:[{x:.28,y:.14},{x:.72,y:.14}],
+      I:[{x:.50,y:.14}],
+      J:[{x:.72,y:.14},{x:.72,y:.78}],
+      K:[{x:.28,y:.14},{x:.72,y:.14}],
+      L:[{x:.28,y:.14},{x:.28,y:.86}],
+      M:[{x:.22,y:.86},{x:.22,y:.14},{x:.78,y:.14}],
+      N:[{x:.28,y:.86},{x:.28,y:.14},{x:.72,y:.86}],
+      O:[{x:.50,y:.14}],
+      P:[{x:.28,y:.14},{x:.28,y:.86}],
+      Q:[{x:.50,y:.14},{x:.68,y:.72}],
+      R:[{x:.28,y:.14},{x:.28,y:.86}],
+      S:[{x:.72,y:.24},{x:.28,y:.76}],
+      T:[{x:.22,y:.14},{x:.50,y:.14}],
+      U:[{x:.28,y:.14},{x:.72,y:.14}],
+      V:[{x:.22,y:.14},{x:.78,y:.14}],
+      W:[{x:.18,y:.14},{x:.82,y:.14}],
+      X:[{x:.24,y:.14},{x:.76,y:.14}],
+      Y:[{x:.24,y:.14},{x:.76,y:.14}],
+      Z:[{x:.24,y:.14},{x:.76,y:.86}],
+    };
+    return (map[letter] || [{x:.5,y:.14}]).map(p => ({ x:p.x*s, y:p.y*s }));
+  }
+
+  // ── Pointer Input ────────────────────────────────────────────────────────
+
+  function getPoint(e) {
+    const rect  = canvas.getBoundingClientRect();
+    const sx    = canvas.width  / rect.width;
+    const sy    = canvas.height / rect.height;
+    const baseW = Math.max(10, canvasSize * 0.022);
+    const w     = (e.pointerType === 'pen' && e.pressure > 0)
+                  ? baseW * (0.6 + e.pressure * 0.8)
+                  : baseW;
+    return { x:(e.clientX - rect.left)*sx, y:(e.clientY - rect.top)*sy, w };
+  }
+
+  function onPointerDown(e) {
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    isDrawing     = true;
+    currentStroke = [];
+    hideFeedback();
+    clearTimeout(doneTimer);
+    hideDoneBtn();
+
+    const pt = getPoint(e);
+    currentStroke.push(pt);
+    ctx.beginPath();
+    ctx.strokeStyle = '#FFD600';
+    ctx.lineWidth   = pt.w;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    ctx.moveTo(pt.x, pt.y);
+  }
+
+  function onPointerMove(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const pt = getPoint(e);
+    currentStroke.push(pt);
+    ctx.lineWidth = pt.w;
+    ctx.lineTo(pt.x, pt.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pt.x, pt.y);
+  }
+
+  function onPointerUp(e) {
+    if (!isDrawing) return;
+    isDrawing = false;
+    if (currentStroke.length > 0) drawnStrokes.push([...currentStroke]);
+    currentStroke = [];
+    if (drawnStrokes.length > 0) doneTimer = setTimeout(showDoneBtn, 1000);
+  }
+
+  // ── Clear ────────────────────────────────────────────────────────────────
+
+  function clearCanvas() {
+    drawnStrokes  = [];
+    currentStroke = [];
+    isDrawing     = false;
+    clearTimeout(doneTimer);
+    hideDoneBtn();
+    hideFeedback();
+    drawGhostLetter();
+  }
+
+  // ── Done Button ──────────────────────────────────────────────────────────
+
+  function showDoneBtn() {
+    const btn = document.getElementById('done-btn');
+    btn.classList.add('visible');
+    btn.removeAttribute('aria-hidden');
+  }
+
+  function hideDoneBtn() {
+    const btn = document.getElementById('done-btn');
+    btn.classList.remove('visible');
+    btn.setAttribute('aria-hidden', 'true');
+  }
+
+  // ── Feedback ─────────────────────────────────────────────────────────────
+
+  function showFeedback(bg, html) {
+    const fb = document.getElementById('canvas-feedback');
+    fb.style.background = bg;
+    fb.classList.add('show');
+    fb.innerHTML = html;
+  }
+
+  function hideFeedback() {
+    const fb = document.getElementById('canvas-feedback');
+    fb.classList.remove('show');
+    fb.style.background = '';
+  }
+
+  // ── Accuracy Check ───────────────────────────────────────────────────────
+
+  function checkAccuracy() {
+    hideDoneBtn();
+    AppState.tracing.attemptCount++;
+    showGrade(coverageToTier(computeCoverage()));
+  }
+
+  function computeCoverage() {
+    const s      = canvasSize;
+    const mainPx = ctx.getImageData(0, 0, s, s).data;
+
+    function isDrawn(x, y) {
+      if (x < 0 || y < 0 || x >= s || y >= s) return false;
+      const i = (y * s + x) * 4;
+      return mainPx[i+3] > 128 && mainPx[i] > 180 && mainPx[i+1] > 140 && mainPx[i+2] < 120;
+    }
+
+    // Offscreen canvas: solid fill for pixel sampling (coverage check still needs fillText)
+    const off = document.createElement('canvas');
+    off.width = off.height = s;
+    const oc = off.getContext('2d');
+    oc.fillStyle = '#FFFFFF';
+    oc.fillRect(0, 0, s, s);
+    const fs = Math.floor(s * 0.72);
+    oc.fillStyle    = '#000000';
+    oc.font         = `bold ${fs}px 'Fredoka One', 'Arial Rounded MT Bold', Arial, sans-serif`;
+    oc.textAlign    = 'center';
+    oc.textBaseline = 'middle';
+    oc.fillText(AppState.tracing.currentLetter, s / 2, s / 2 + fs * 0.04);
+    const ghostPx = oc.getImageData(0, 0, s, s).data;
+
+    function isGhost(x, y) { return ghostPx[(y * s + x) * 4] < 80; }
+
+    const STEP = 6, RADIUS = 30, RSTEP = 3;
+    let letterPx = 0, coveredPx = 0;
+    for (let y = 0; y < s; y += STEP) {
+      for (let x = 0; x < s; x += STEP) {
+        if (!isGhost(x, y)) continue;
+        letterPx++;
+        let found = false;
+        outer: for (let dy = -RADIUS; dy <= RADIUS; dy += RSTEP) {
+          for (let dx = -RADIUS; dx <= RADIUS; dx += RSTEP) {
+            if (dx*dx + dy*dy > RADIUS*RADIUS) continue;
+            if (isDrawn(x+dx, y+dy)) { found = true; break outer; }
+          }
+        }
+        if (found) coveredPx++;
+      }
+    }
+    return letterPx === 0 ? 0 : coveredPx / letterPx;
+  }
+
+  // ── 5-Tier Grade ─────────────────────────────────────────────────────────
+
+  function showGrade(tier) {
+    const t = GRADE_TIERS[tier];
+    showFeedback(t.bg, buildGradeHTML(tier));
+
+    if (t.shake) {
+      const w = document.getElementById('canvas-wrapper');
+      w.classList.remove('shake');
+      void w.offsetWidth;
+      w.classList.add('shake');
+      w.addEventListener('animationend', () => w.classList.remove('shake'), { once:true });
+    }
+    if (t.confetti) launchConfetti(t.confetti);
+    if (t.sparkle)  launchSparkles();
+
+    const displayMs = tier >= 4 ? 3800 : 2800;
+    setTimeout(hideFeedback, displayMs);
+  }
+
+  return { init, start };
+})();
+
+// ─── SPELLING GAME MODULE ────────────────────────────────────────────────────
+
+const SpellingGameModule = (() => {
+  let canvas, ctx;
+  let isDrawing     = false;
+  let currentStroke = [];
+  let drawnStrokes  = [];
+  let doneTimer     = null;
+  let canvasSize    = 480;
+
+  let selectedTopic = null;
+  let selectedWord  = null;
+  let letterIndex   = 0;
+  let wordLetters   = [];    // word characters with spaces removed
+
+  // ── Init ────────────────────────────────────────────────────────────────
+
+  function init() {
+    canvas = document.getElementById('spelling-canvas');
+    ctx    = canvas.getContext('2d', { willReadFrequently: true });
+
+    buildTopicCards();
+    attachEvents();
+    measureAndSize();
+  }
+
+  function attachEvents() {
+    document.getElementById('spelling-back-btn').addEventListener('click', handleBack);
+    document.getElementById('spelling-clear-btn').addEventListener('click', clearCanvas);
+    document.getElementById('spelling-done-btn').addEventListener('click', checkAccuracy);
+    document.getElementById('wco-try-another').addEventListener('click', () => {
+      hideWordComplete();
+      showSubview('spelling-emoji-picker');
+      setHeader(selectedTopic.label + ' ' + selectedTopic.icon);
+    });
+    document.getElementById('wco-new-topic').addEventListener('click', () => {
+      hideWordComplete();
+      showSubview('spelling-topic-picker');
+      setHeader('Spelling!');
+    });
+
+    canvas.addEventListener('pointerdown',   onPointerDown);
+    canvas.addEventListener('pointermove',   onPointerMove);
+    canvas.addEventListener('pointerup',     onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+    window.addEventListener('resize', () => {
+      if (AppState.currentScreen !== 'screen-game-spelling') return;
+      measureAndSize();
+      if (selectedWord) drawGhostLetter();
+      drawnStrokes = [];
+      hideDoneBtn();
+      hideFeedback();
+    });
+  }
+
+  function measureAndSize() {
+    const availH = window.innerHeight - 340;  // extra room for progress bar
+    const availW = window.innerWidth  - 40;
+    canvasSize = Math.max(260, Math.min(520, availH, availW));
+    canvas.width  = canvasSize;
+    canvas.height = canvasSize;
+  }
+
+  // ── Sub-view Management ─────────────────────────────────────────────────
+
+  function showSubview(id) {
+    ['spelling-topic-picker','spelling-emoji-picker','spelling-trace-view'].forEach(sid => {
+      const el = document.getElementById(sid);
+      el.style.display = (sid === id) ? 'flex' : 'none';
+    });
+  }
+
+  function setHeader(title) {
+    document.getElementById('spelling-header-title').textContent = title;
+  }
+
+  function handleBack() {
+    const topicVisible = document.getElementById('spelling-topic-picker').style.display !== 'none';
+    const emojiVisible = document.getElementById('spelling-emoji-picker').style.display !== 'none';
+
+    if (topicVisible) {
+      AppRouter.navigate('screen-storefront');
+    } else if (emojiVisible) {
+      showSubview('spelling-topic-picker');
+      setHeader('Spelling!');
+    } else {
+      // Tracing view
+      clearCanvasState();
+      showSubview('spelling-emoji-picker');
+      setHeader(selectedTopic.label + ' ' + selectedTopic.icon);
+    }
+  }
+
+  // ── Topic Cards ─────────────────────────────────────────────────────────
+
+  const TOPIC_COLORS = { animals:'#66BB6A', magic:'#AB47BC', vehicles:'#4FC3F7', food:'#FF9800', space:'#37474F' };
+
+  function buildTopicCards() {
+    const container = document.getElementById('spelling-topic-cards');
+    container.innerHTML = '';
+    SPELLING_TOPICS.forEach(topic => {
+      const color = TOPIC_COLORS[topic.id] || '#AB47BC';
+      const card  = document.createElement('div');
+      card.className = 'game-card open';
+      card.innerHTML = `
+        <div class="card-stripe" style="background:${color}"></div>
+        <div class="card-emoji">${topic.icon}</div>
+        <div class="card-title">${topic.label}</div>
+        <div class="card-badge badge-open">PICK ME</div>`;
+      card.addEventListener('click', () => selectTopic(topic));
+      container.appendChild(card);
+    });
+  }
+
+  function selectTopic(topic) {
+    selectedTopic = topic;
+    buildEmojiGrid(topic);
+    showSubview('spelling-emoji-picker');
+    setHeader(topic.label + ' ' + topic.icon);
+  }
+
+  // ── Emoji Grid ──────────────────────────────────────────────────────────
+
+  function buildEmojiGrid(topic) {
+    const grid = document.getElementById('spelling-emoji-grid');
+    grid.innerHTML = '';
+    topic.words.forEach(wordObj => {
+      const btn = document.createElement('button');
+      btn.className   = 'emoji-btn';
+      btn.textContent = wordObj.emoji;
+      btn.title       = wordObj.word;
+      btn.addEventListener('click', () => selectWord(wordObj));
+      grid.appendChild(btn);
+    });
+  }
+
+  function selectWord(wordObj) {
+    selectedWord = wordObj;
+    wordLetters  = wordObj.word.split('').filter(c => c !== ' ');
+    letterIndex  = 0;
+
+    clearCanvasState();
+    measureAndSize();
+    showSubview('spelling-trace-view');
+    setHeader(wordObj.emoji + '  ' + wordObj.word.split('').join('-'));
+
+    renderProgressBar();
+    drawGhostLetter();
+    document.fonts.ready.then(drawGhostLetter);
+  }
+
+  // ── Progress Bar ────────────────────────────────────────────────────────
+
+  function renderProgressBar() {
+    const bar = document.getElementById('word-progress-bar');
+    bar.innerHTML = `<span class="wpb-emoji">${selectedWord.emoji}</span><div class="wpb-letters" id="wpb-letters"></div>`;
+    const lettersEl = document.getElementById('wpb-letters');
+    let nonSpaceIdx = 0;
+    selectedWord.word.split('').forEach(ch => {
+      const span = document.createElement('span');
+      if (ch === ' ') {
+        span.className = 'wpb-letter space-char';
+      } else {
+        span.className        = 'wpb-letter';
+        span.textContent      = ch;
+        span.dataset.nsIdx    = nonSpaceIdx++;
+      }
+      lettersEl.appendChild(span);
+    });
+    updateProgressBar();
+  }
+
+  function updateProgressBar() {
+    document.querySelectorAll('#wpb-letters .wpb-letter:not(.space-char)').forEach((span, idx) => {
+      span.classList.remove('current', 'done');
+      if      (idx < letterIndex)  span.classList.add('done');
+      else if (idx === letterIndex) span.classList.add('current');
+    });
+  }
+
+  // ── Canvas Drawing ───────────────────────────────────────────────────────
+
+  function drawGhostLetter() {
+    const s      = canvasSize;
+    const letter = wordLetters[letterIndex];
+    if (!letter) return;
+
+    const fs = Math.floor(s * 0.72);
+    ctx.clearRect(0, 0, s, s);
+    ctx.fillStyle = '#FFFDE7';
+    ctx.fillRect(0, 0, s, s);
+
+    // Outline ghost — same style as tracing game
+    ctx.save();
+    ctx.globalAlpha  = 0.55;
+    ctx.strokeStyle  = '#B0BEC5';
+    ctx.lineWidth    = Math.max(10, s * 0.022);
+    ctx.lineJoin     = 'round';
+    ctx.lineCap      = 'round';
+    ctx.font         = `bold ${fs}px 'Fredoka One', 'Arial Rounded MT Bold', Arial, sans-serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeText(letter, s / 2, s / 2 + fs * 0.04);
+    ctx.globalAlpha  = 1;
+    ctx.restore();
+  }
+
+  // ── Pointer Input ────────────────────────────────────────────────────────
+
+  function getPoint(e) {
+    const rect  = canvas.getBoundingClientRect();
+    const sx    = canvas.width  / rect.width;
+    const sy    = canvas.height / rect.height;
+    const baseW = Math.max(10, canvasSize * 0.022);
+    const w     = (e.pointerType === 'pen' && e.pressure > 0)
+                  ? baseW * (0.6 + e.pressure * 0.8)
+                  : baseW;
+    return { x:(e.clientX - rect.left)*sx, y:(e.clientY - rect.top)*sy, w };
+  }
+
+  function onPointerDown(e) {
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    isDrawing     = true;
+    currentStroke = [];
+    hideFeedback();
+    clearTimeout(doneTimer);
+    hideDoneBtn();
+
+    const pt = getPoint(e);
+    currentStroke.push(pt);
+    ctx.beginPath();
+    ctx.strokeStyle = '#FFD600';
+    ctx.lineWidth   = pt.w;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    ctx.moveTo(pt.x, pt.y);
+  }
+
+  function onPointerMove(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const pt = getPoint(e);
+    currentStroke.push(pt);
+    ctx.lineWidth = pt.w;
+    ctx.lineTo(pt.x, pt.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pt.x, pt.y);
+  }
+
+  function onPointerUp(e) {
+    if (!isDrawing) return;
+    isDrawing = false;
+    if (currentStroke.length > 0) drawnStrokes.push([...currentStroke]);
+    currentStroke = [];
+    if (drawnStrokes.length > 0) doneTimer = setTimeout(showDoneBtn, 1000);
+  }
+
+  // ── Clear ────────────────────────────────────────────────────────────────
+
+  function clearCanvas() {
+    drawnStrokes  = [];
+    currentStroke = [];
+    isDrawing     = false;
+    clearTimeout(doneTimer);
+    hideDoneBtn();
+    hideFeedback();
+    drawGhostLetter();
+  }
+
+  function clearCanvasState() {
+    drawnStrokes  = [];
+    currentStroke = [];
+    isDrawing     = false;
+    clearTimeout(doneTimer);
+    hideDoneBtn();
+    hideFeedback();
+  }
+
+  // ── Done Button ──────────────────────────────────────────────────────────
+
+  function showDoneBtn() {
+    const btn = document.getElementById('spelling-done-btn');
+    btn.classList.add('visible');
+    btn.removeAttribute('aria-hidden');
+  }
+
+  function hideDoneBtn() {
+    const btn = document.getElementById('spelling-done-btn');
+    btn.classList.remove('visible');
+    btn.setAttribute('aria-hidden', 'true');
+  }
+
+  // ── Feedback ─────────────────────────────────────────────────────────────
+
+  function showFeedback(bg, html) {
+    const fb = document.getElementById('spelling-canvas-feedback');
+    fb.style.background = bg;
+    fb.classList.add('show');
+    fb.innerHTML = html;
+  }
+
+  function hideFeedback() {
+    const fb = document.getElementById('spelling-canvas-feedback');
+    fb.classList.remove('show');
+    fb.style.background = '';
+  }
+
+  // ── Accuracy Check ───────────────────────────────────────────────────────
+
+  function checkAccuracy() {
+    hideDoneBtn();
+    showGrade(coverageToTier(computeCoverage()));
+  }
+
+  function computeCoverage() {
+    const s      = canvasSize;
+    const letter = wordLetters[letterIndex];
+    const mainPx = ctx.getImageData(0, 0, s, s).data;
+
+    function isDrawn(x, y) {
+      if (x < 0 || y < 0 || x >= s || y >= s) return false;
+      const i = (y * s + x) * 4;
+      return mainPx[i+3] > 128 && mainPx[i] > 180 && mainPx[i+1] > 140 && mainPx[i+2] < 120;
+    }
+
+    const off = document.createElement('canvas');
+    off.width = off.height = s;
+    const oc = off.getContext('2d');
+    oc.fillStyle = '#FFFFFF';
+    oc.fillRect(0, 0, s, s);
+    const fs = Math.floor(s * 0.72);
+    oc.fillStyle    = '#000000';
+    oc.font         = `bold ${fs}px 'Fredoka One', 'Arial Rounded MT Bold', Arial, sans-serif`;
+    oc.textAlign    = 'center';
+    oc.textBaseline = 'middle';
+    oc.fillText(letter, s / 2, s / 2 + fs * 0.04);
+    const ghostPx = oc.getImageData(0, 0, s, s).data;
+
+    function isGhost(x, y) { return ghostPx[(y * s + x) * 4] < 80; }
+
+    const STEP = 6, RADIUS = 30, RSTEP = 3;
+    let letterPx = 0, coveredPx = 0;
+    for (let y = 0; y < s; y += STEP) {
+      for (let x = 0; x < s; x += STEP) {
+        if (!isGhost(x, y)) continue;
+        letterPx++;
+        let found = false;
+        outer: for (let dy = -RADIUS; dy <= RADIUS; dy += RSTEP) {
+          for (let dx = -RADIUS; dx <= RADIUS; dx += RSTEP) {
+            if (dx*dx + dy*dy > RADIUS*RADIUS) continue;
+            if (isDrawn(x+dx, y+dy)) { found = true; break outer; }
+          }
+        }
+        if (found) coveredPx++;
+      }
+    }
+    return letterPx === 0 ? 0 : coveredPx / letterPx;
+  }
+
+  // ── 5-Tier Grade ─────────────────────────────────────────────────────────
+
+  // Tiers 3-5 advance to the next letter; 1-2 stay on same letter
+  const ADVANCE_FROM_TIER = 3;
+
+  function showGrade(tier) {
+    const t = GRADE_TIERS[tier];
+    showFeedback(t.bg, buildGradeHTML(tier));
+
+    if (t.shake) {
+      const w = document.getElementById('spelling-canvas-wrapper');
+      w.classList.remove('shake');
+      void w.offsetWidth;
+      w.classList.add('shake');
+      w.addEventListener('animationend', () => w.classList.remove('shake'), { once:true });
+    }
+    if (t.confetti) launchConfetti(t.confetti);
+    if (t.sparkle)  launchSparkles();
+
+    const displayMs = tier >= 4 ? 3800 : 2600;
+    setTimeout(() => {
+      hideFeedback();
+      if (tier >= ADVANCE_FROM_TIER) advanceLetter();
+      else                           clearCanvas();
+    }, displayMs);
+  }
+
+  // ── Letter Advancement ───────────────────────────────────────────────────
+
+  function advanceLetter() {
+    letterIndex++;
+    if (letterIndex >= wordLetters.length) {
+      showWordComplete();
+    } else {
+      drawnStrokes  = [];
+      currentStroke = [];
+      isDrawing     = false;
+      clearTimeout(doneTimer);
+      hideDoneBtn();
+      updateProgressBar();
+      drawGhostLetter();
+    }
+  }
+
+  // ── Word Complete ────────────────────────────────────────────────────────
+
+  function showWordComplete() {
+    document.getElementById('wco-emoji').textContent = selectedWord.emoji;
+    document.getElementById('wco-word').textContent  = selectedWord.word;
+    document.getElementById('wco-msg').textContent   = `You spelled ${selectedWord.word}! 🎉`;
+    document.getElementById('word-complete-overlay').style.display = 'flex';
+    launchConfetti(56);
+    launchSparkles();
+  }
+
+  function hideWordComplete() {
+    document.getElementById('word-complete-overlay').style.display = 'none';
+    clearCanvasState();
+  }
+
+  // ── Start ────────────────────────────────────────────────────────────────
+
+  function start() {
+    selectedTopic = null;
+    selectedWord  = null;
+    letterIndex   = 0;
+    wordLetters   = [];
+    clearCanvasState();
+    showSubview('spelling-topic-picker');
+    setHeader('Spelling!');
+  }
+
+  return { init, start };
+})();
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+(function main() {
+  StorefrontModule.init();
+  TracingGameModule.init();
+  SpellingGameModule.init();
+  AppRouter.navigate('screen-storefront');
+}());
+</script>
+</body>
+</html>
